@@ -117,7 +117,7 @@ if selected == "Thông tin giao dịch":
     # ----------------------SECTION 1 ------------------#
     st.markdown("<h1>Phân loại theo Nhà Đầu Tư - Ngành chuyên sâu </h1>", unsafe_allow_html=True)
 
-    df = load_data("E:\GOI1\MSSV_CHAN_GOI1_GROUP1\MSSV_CHAN_GOI1_GROUP1\Data\output.csv")
+    df = load_data("D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/output.csv")
 
     type_options = ['khớp_ròng', 'thỏa_thuận_ròng']
     investor_options = ['cá_nhân', 'tổ_chức_trong_nước', 'tự_doanh', 'nước_ngoài']
@@ -824,7 +824,7 @@ if selected == "Thông tin giao dịch":
 
 elif selected == "Tổng quan thị trường":
     st.markdown("<h1>📊 Tổng quan về vốn hóa TTCK Việt Nam</h1>", unsafe_allow_html=True)
-    EXCEL_PATH = "E:/GOI1_B3/cat1/Cleaned_Vietnam_Marketcap.xlsx"
+    EXCEL_PATH = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Cleaned_Vietnam_Marketcap.xlsx"
 
 
     @st.cache_data
@@ -938,7 +938,7 @@ elif selected == "Tổng quan thị trường":
             # Initialize PDF
             pdf = FPDF()
             pdf.add_page()
-            pdf.add_font("DejaVu", "", r"E:/GOI1/MSSV_CHAN_GOI1_GROUP1/ttf/DejaVuSans.ttf", uni=True)
+            pdf.add_font("DejaVu", "", r"D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/DejaVuSans.ttf", uni=True)
             pdf.set_font("DejaVu", size=12)
 
             pdf.cell(200, 10, "Báo cáo thị trường chứng khoán Việt Nam", ln=True, align='C')
@@ -1009,9 +1009,9 @@ elif selected == "Tổng quan theo ngành":
     st.markdown("<h1>📊 Phân loại theo nhà đầu tư - khối ngoại FT</h1>", unsafe_allow_html=True)
     subpage = st.radio("Chọn danh mục", ["Net FT Overview", "Net FT - Ticker", "TOP_FT"], horizontal=True)
     file_paths = {
-        "E:/GOI1_B3/Cleaned data/CleanedFT/FT1921_cleaned.csv",
-        "E:/GOI1_B3/Cleaned data/CleanedFT/FT2123_cleaned.csv",
-        "E:/GOI1_B3/Cleaned data/CleanedFT/FT2325_cleaned.csv"
+        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT1921_cleaned.csv",
+        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT2123_cleaned.csv",
+        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT2325_cleaned.csv"
     }
     if subpage == "Net FT Overview":
         def load_data():
@@ -1415,8 +1415,8 @@ elif selected == "Xu hướng thị trường":
     subpage = st.radio("Chọn danh mục",
                        ["Tổng quan", "Chi tiết cổ phiếu", "So sánh cổ phiếu", "Phân tích thị trường với MA",
                         "Đỉnh của CP"], horizontal=True)
-    PRICE_DATA_PATH = 'E:/GOI1/MSSV_CHAN_GOI1_GROUP1/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_Price.xlsx'
-    VOLUME_DATA_PATH = 'E:/GOI1/MSSV_CHAN_GOI1_GROUP1/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_volume_2.xlsx'
+    PRICE_DATA_PATH = 'D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_Price.xlsx'
+    VOLUME_DATA_PATH = 'D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_volume_2.xlsx'
 
 
     # 📌 Load dữ liệu từ file Excel
@@ -1463,8 +1463,8 @@ elif selected == "Xu hướng thị trường":
             return None, None
 
 
-    file_price = "E:/GOI1_B3/Lợi/Processed_Vietnam_Price_Long.csv.gz"
-    file_volume = "E:/GOI1_B3/Lợi/Processed_Vietnam_Volume_Long.csv.gz"
+    file_price = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Price_Long.csv.gz"
+    file_volume = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Volume_Long.csv.gz"
 
 
     def select_date1(df_price):
