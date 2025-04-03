@@ -120,7 +120,7 @@ with st.sidebar:
     
 if selected == "Tổng quan thị trường":
     st.markdown("<h1>📊 Tổng quan về vốn hóa TTCK Việt Nam</h1>", unsafe_allow_html=True)
-    EXCEL_PATH = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Cleaned_Vietnam_Marketcap.xlsx"
+    EXCEL_PATH = "./Data/Cleaned_Vietnam_Marketcap.xlsx"
 
     @st.cache_data
     def load_and_process_data():
@@ -203,7 +203,7 @@ if selected == "Tổng quan thị trường":
             # Initialize PDF
             pdf = FPDF()
             pdf.add_page()
-            pdf.add_font("DejaVu", "", r"D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/DejaVuSans.ttf", uni=True)
+            pdf.add_font("DejaVu", "", r"./DejaVuSans.ttf", uni=True)
             pdf.set_font("DejaVu", size=12)
 
             pdf.cell(200, 10, "Báo cáo thị trường chứng khoán Việt Nam", ln=True, align='C')
@@ -271,9 +271,9 @@ if selected == "Tổng quan thị trường":
 elif selected == "Tổng quan theo ngành":
     st.markdown("<h1>📊 Dòng tiền và giá đóng cửa</h1>", unsafe_allow_html=True)
     file_paths = {
-        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT1921_cleaned.csv",
-        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT2123_cleaned.csv",
-        "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/CleanedFT/FT2325_cleaned.csv"
+        "./Data/CleanedFT/FT1921_cleaned.csv",
+        "./Data/CleanedFT/FT2123_cleaned.csv",
+        "./Data/CleanedFT/FT2325_cleaned.csv"
     }
 
     
@@ -427,8 +427,8 @@ elif selected == "Tổng quan theo ngành":
 # ----------------------Phân tích cổ phiếu--------------------------------------------------------------------------------------------------------
 elif selected == "Phân tích kỹ thuật":
     st.markdown("<h1>📊Phân tích kỹ thuật</h1>", unsafe_allow_html=True)
-    PRICE_DATA_PATH = r'D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_Price.xlsx'
-    VOLUME_DATA_PATH = r'D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_volume_2.xlsx'
+    PRICE_DATA_PATH = r'./Data/Processed_Vietnam_Price.xlsx'
+    VOLUME_DATA_PATH = r'./Data/Processed_Vietnam_volume_2.xlsx'
 
 
     # 📌 Load dữ liệu từ file Excel
@@ -475,8 +475,8 @@ elif selected == "Phân tích kỹ thuật":
             return None, None
 
 
-    file_price = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Price_Long.csv.gz"
-    file_volume = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Volume_Long.csv.gz"
+    file_price = "./Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Price_Long.csv.gz"
+    file_volume = "./Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Volume_Long.csv.gz"
 
 
     def select_date1(df_price):
@@ -2099,7 +2099,7 @@ elif selected == "Phân tích kỹ thuật":
 
     # Phân tích kỹ thuật với MA
     # Đường dẫn đến file CSV trên backend
-    FILE_PATH1 = "D:/Documents/HA/MSSV_CHAN_GOI1_GROUP1/Data/Processed_Vietnam_Price.xlsx - Processed_Sheet2.csv"
+    FILE_PATH1 = "./Data/Processed_Vietnam_Price.xlsx - Processed_Sheet2.csv"
 
 
     # Hàm đọc và xử lý dữ liệu
