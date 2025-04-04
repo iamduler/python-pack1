@@ -243,6 +243,7 @@ def generate_pdf_by_stock_code(stock_code):
         st.success(f"✅ PDF đã được tạo: {pdf_path}")
         st.download_button("Tổng quan thị trường", data=file, file_name=pdf_path, mime="application/pdf")
 
+@st.cache_data
 def load_data_by_file(files):
     dfs = {}
     for path in files:
@@ -273,8 +274,6 @@ def load_data_tab3():
     file_volume = "./Data/Thong_ke_gia_phan_loai_NDT/Processed_Vietnam_Volume_Long.csv.gz"
 
     # Phân tích kỹ thuật với MA
-    # Đường dẫn đến file CSV trên backend
-    FILE_PATH1 = "./Data/Processed_Vietnam_Price.xlsx - Processed_Sheet2.csv"
 
     # Load dữ liệu từ file Excel
     df_price = pd.read_excel(PRICE_DATA_PATH)
@@ -319,23 +318,27 @@ def load_data2(price_file, volume_file):
 
 # PDF Export Functionality using Matplotlib
 def export_pdf_combined(fig_plot, date):
-    buf = BytesIO()
-    with PdfPages(buf) as pdf:
-        plt.figure(figsize=(8, 6))
-        plt.text(0.5, 0.8, "Foreign Investor Trading Report", fontsize=14, ha='center')
-        plt.text(0.5, 0.6, f"Date Extracted: {date.strftime('%d/%m/%Y')}", fontsize=12, ha='center')
-        plt.axis("off")
-        pdf.savefig()
-        plt.close()
+    try:
+        buf = BytesIO()
+        with PdfPages(buf) as pdf:
+            plt.figure(figsize=(8, 6))
+            plt.text(0.5, 0.8, "Foreign Investor Trading Report", fontsize=14, ha='center')
+            plt.text(0.5, 0.6, f"Date Extracted: {date.strftime('%d/%m/%Y')}", fontsize=12, ha='center')
+            plt.axis("off")
+            pdf.savefig()
+            plt.close()
 
-        fig_bytes = pio.to_image(fig_plot, format="png")
-        img = plt.imread(BytesIO(fig_bytes))
-        plt.figure(figsize=(10, 6))
-        plt.imshow(img)
-        plt.axis("off")
-        pdf.savefig()
-        plt.close()
-    buf.seek(0)
+            fig_bytes = pio.to_image(fig_plot, format="png")
+            img = plt.imread(BytesIO(fig_bytes))
+            plt.figure(figsize=(10, 6))
+            plt.imshow(img)
+            plt.axis("off")
+            pdf.savefig()
+            plt.close()
+        buf.seek(0)
+    except Exception as e:
+        print(f"Lỗi xảy ra: {e}")
+        
     return buf
 
 
@@ -1959,6 +1962,9 @@ def update_chart(df, company, selected_indicators, selected_ma, selected_rsi, se
 
 # Hàm đọc và xử lý dữ liệu
 def load_data_TA():
+    # Đường dẫn đến file CSV trên backend
+    FILE_PATH1 = "./Data/Processed_Vietnam_Price.xlsx - Processed_Sheet2.csv"
+    
     df = pd.read_csv(FILE_PATH1, dtype=str, low_memory=False, encoding="utf-8")
     df_long = df.melt(id_vars=["Name", "Code"], var_name="Date", value_name="Close_Price")
     invalid_dates = ["RIC", "Start Date", "Exchange", "Sector", "Activity"]
@@ -2116,7 +2122,10 @@ if selected == "1. Tổng quan thị trường":
             st.pyplot(fig_stock)
         # Pass the stock code to generate_pdf function when button is clicked
     if st.button("Xuất báo cáo PDF"):
-        generate_pdf_by_stock_code(stock_code)  # Pass stock_code to generate_pdf
+        try:
+            generate_pdf_by_stock_code(stock_code)  # Pass stock_code to generate_pdf
+        except Exception as e:
+            print(f"Lỗi xảy ra: {e}") 
 
 elif selected == "2. Tổng quan theo ngành":
     st.markdown("<h1>📊 Tổng quan theo ngành</h1>", unsafe_allow_html=True)
@@ -2284,11 +2293,11 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
         
         # Technical Analysis Filters
         st.subheader("1. Bộ lọc - Tổng quan thị trường")
-        st.markdown("<h6>Đầu vào bao gồm: Mã cổ phiếu</h6>", unsafe_allow_html=True)
+        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</i>", unsafe_allow_html=True)
 
         # Financial Report Filters
         st.subheader("2. Bộ lọc - Tổng quan theo ngành")
-        st.markdown("<h6>Đầu vào bao gồm: Mã cổ phiếu + ngày bắt đầu & kết thúc.</h6>", unsafe_allow_html=True)
+        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + ngày bắt đầu & kết thúc.)</i>", unsafe_allow_html=True)
 
         dataTab2 = dataframesTab2.copy()
 
@@ -2314,7 +2323,7 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
 
         # Industry Overview Filters
         st.subheader("3. Bộ lọc - Phân tích kỹ thuật")
-        st.markdown("<h6>Đầu vào bao gồm: Mã cổ phiếu + chỉ báo kĩ thuật + khoảng thời gian.</h6>", unsafe_allow_html=True)
+        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + chỉ báo kĩ thuật + khoảng thời gian)</i>", unsafe_allow_html=True)
         
         if not stock_code:
             st.warning("⚠ Vui lòng chọn mã cổ phiếu!")
@@ -2365,9 +2374,9 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
             "Toàn bộ": date_columns_dt_tab3.min(),
         }
         start_date = time_ranges_tab3.get(time_range_tab3, date_columns_dt_tab3.min())
-        if start_date < date_columns_dt_tab3.min():
-            st.warning(f"⚠ Không có đủ dữ liệu để tính {time_range_tab3}! Đang chọn ngày sớm nhất có thể.")
-            start_date = date_columns_dt_tab3.min()
+        # if start_date < date_columns_dt_tab3.min():
+        #     st.warning(f"⚠ Không có đủ dữ liệu để tính {time_range_tab3}! Đang chọn ngày sớm nhất có thể.")
+        #     start_date = date_columns_dt_tab3.min()
 
         # Lấy chuỗi thời gian cho mã được chọn (sử dụng dữ liệu từ file Excel)
         df_ts = get_stock_timeseries(stock_code, df_price_tab3, df_volume_tab3, date_columns_dt_tab3, start_date,
@@ -2394,7 +2403,7 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
 
         # Market Overview Filters
         st.subheader("4. Báo cáo tài chính")
-        st.markdown("<h6>Đầu vào bao gồm: Mã cổ phiếu</h6>", unsafe_allow_html=True)
+        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</i>", unsafe_allow_html=True)
     
     with col2:
         st.subheader("📄 Xuất Báo Cáo Tổng Hợp")
