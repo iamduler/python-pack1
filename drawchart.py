@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import os
 from caculate import calculate_financial_ratios
 
 # Hàm lấy giá trị từ transposed_df, luôn trả về mảng numpy hợp lệ

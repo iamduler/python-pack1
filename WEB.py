@@ -5,14 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.express as px
-import seaborn as sns
-import matplotlib.colors as mcolors
-import re
 from streamlit_option_menu import option_menu
 from ta.trend import SMAIndicator, EMAIndicator, MACD, PSARIndicator
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands
-from fpdf import FPDF
 from io import BytesIO
 import tempfile
 import plotly.io as pio
@@ -20,7 +16,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 
 from pdf import generate_pdf
-from readdata import process_financial_data
 from drawchart import draw_chart
 from pdf_instance import get_pdf_instance
 
@@ -2129,7 +2124,7 @@ def generate_comprehensive_pdf(stock_code, selected_date, start_date, end_date, 
 	pdf = get_pdf_instance()
 	pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
 	pdf.set_font("DejaVu", size=12)
-	
+
 	# Title Page
 	pdf.add_page()
 	pdf.set_font("DejaVu", size=24)
