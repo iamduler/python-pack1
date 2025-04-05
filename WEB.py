@@ -22,6 +22,8 @@ from datetime import datetime
 from pdf import generate_pdf
 from readdata import process_financial_data
 from drawchart import draw_chart
+from pdf_instance import get_pdf_instance
+
 
 st.set_page_config(layout="wide")  # Giao diện toàn màn hình
 
@@ -194,7 +196,7 @@ def generate_pdf_by_stock_code(stock_code):
         SECTOR_MARKETCAP_T.index = pd.to_datetime(SECTOR_MARKETCAP_T.index)
 
         # Initialize PDF
-        pdf = FPDF()
+        pdf = get_pdf_instance()
         pdf.add_page()
         pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)  # Regular
         pdf.set_font("DejaVu", size=12)
@@ -321,29 +323,36 @@ def load_data2(price_file, volume_file):
 
 
 # PDF Export Functionality using Matplotlib
-def export_pdf_combined(fig_plot, date):
-    try:
-        buf = BytesIO()
-        with PdfPages(buf) as pdf:
-            plt.figure(figsize=(8, 6))
-            plt.text(0.5, 0.8, "Foreign Investor Trading Report", fontsize=14, ha='center')
-            plt.text(0.5, 0.6, f"Date Extracted: {date.strftime('%d/%m/%Y')}", fontsize=12, ha='center')
-            plt.axis("off")
-            pdf.savefig()
-            plt.close()
+def export_pdf_combined(fig_plot, date, exportImage = False):
+	try:
+		buf = BytesIO()
 
-            fig_bytes = pio.to_image(fig_plot, format="png")
-            img = plt.imread(BytesIO(fig_bytes))
-            plt.figure(figsize=(10, 6))
-            plt.imshow(img)
-            plt.axis("off")
-            pdf.savefig()
-            plt.close()
-        buf.seek(0)
-    except Exception as e:
-        print(f"Lỗi xảy ra: {e}")
-        
-    return buf
+		if exportImage is True:
+			fig_plot.write_image(buf, format='PNG', bbox_inches='tight')  # xuất figure thành ảnh
+			buf.seek(0)
+			return buf
+		
+		with PdfPages(buf) as pdf:
+			plt.figure(figsize=(8, 6))
+			plt.text(0.5, 0.8, "Foreign Investor Trading Report", fontsize=14, ha='center')
+			plt.text(0.5, 0.6, f"Date Extracted: {date.strftime('%d/%m/%Y')}", fontsize=12, ha='center')
+			plt.axis("off")
+			pdf.savefig()
+			plt.close()
+
+			fig_bytes = pio.to_image(fig_plot, format="png")
+			img = plt.imread(BytesIO(fig_bytes))
+			plt.figure(figsize=(10, 6))
+			plt.imshow(img)
+			plt.axis("off")
+			pdf.savefig()
+			plt.close()
+		buf.seek(0)
+				
+	except Exception as e:
+		print(f"Lỗi xảy ra: {e}")
+		
+	return buf
 
 
 def select_date1(df_price):
@@ -2023,7 +2032,7 @@ def count_increasing_ma(df_long, ma_periods):
     buf.seek(0)
     return buf
 
-def createFigureTab2(filtered_data, ticker_selected):
+def createFigureTab2(filtered_data, ticker_selected, renderFig = True):
     # Lọc bỏ ngày không có dữ liệu và sắp xếp lại dữ liệu để không có khoảng trống trên biểu đồ
     filtered_data = filtered_data.dropna(subset=["Net.F_Val", "Close"]).sort_values(by="Date").reset_index(
         drop=True)
@@ -2061,6 +2070,9 @@ def createFigureTab2(filtered_data, ticker_selected):
         marker=dict(size=4),
         yaxis='y2'
     ))
+
+    if renderFig is False:
+        return fig
 
     # Cập nhật layout với nền tối để nổi bật biểu đồ
     fig.update_layout(
@@ -2108,6 +2120,160 @@ dataframesTab2 = load_data_by_file(file_paths)
 
 # 📌 Gọi hàm vẽ biểu đồ
 df_price_tab3, df_volume_tab3, date_columns_tab3 = load_data_tab3()
+
+# Create a comprehensive PDF report
+def generate_comprehensive_pdf(stock_code, selected_date, start_date, end_date, selected_indicators, df_ts, selected_ma, selected_rsi, selected_cci, selected_combination):
+	progress_bar = st.progress(0)  # Initialize progress bar
+
+	file_name = f"Báo cáo Phân tích tổng hợp {stock_code}.pdf"
+	pdf = get_pdf_instance()
+	pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+	pdf.set_font("DejaVu", size=12)
+	
+	# Title Page
+	pdf.add_page()
+	pdf.set_font("DejaVu", size=24)
+	pdf.cell(200, 40, "Báo Cáo Phân Tích Tổng Hợp", ln=True, align='C')
+	pdf.set_font("DejaVu", size=12)
+	pdf.cell(200, 10, f"Ngày tạo: {datetime.now().strftime('%d/%m/%Y')}", ln=True, align='C')
+	
+	# Market Overview Section
+	pdf.add_page()
+	pdf.set_font("DejaVu", size=16)
+	pdf.cell(200, 20, "1. Tổng quan Thị trường", ln=True)
+	# Add market overview visualization
+
+	# Define SECTOR_MARKETCAP_T inside the function or globally
+	SECTOR_MARKETCAP_T = MERGED_DF.groupby("Sector")[DATE_COLUMNS].sum().T
+	SECTOR_MARKETCAP_T.index = pd.to_datetime(SECTOR_MARKETCAP_T.index)
+
+	pdf.cell(200, 10, "Báo cáo thị trường chứng khoán Việt Nam", ln=True, align='C')
+	pdf.ln(10)
+
+	# Calculate top sectors
+	top_sectors = SECTOR_MARKETCAP_T.sum().nlargest(5)
+	for sector, value in top_sectors.items():
+		pdf.cell(200, 10, f"{sector}: {value:,.0f} VNĐ", ln=True)
+
+	pdf.ln(10)
+
+	for i, plot_func in enumerate([plot_sector_treemap, plot_bubble_chart]):
+		if plot_func in [plot_sector_treemap, plot_bubble_chart]:
+			fig = plot_func(DATE_COLUMNS[-1])
+		else:
+			fig = plot_func()
+
+		if fig is None:
+			continue
+
+		with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
+			temp_img.close()  # important
+			if hasattr(fig, "write_image"):
+				fig.write_image(temp_img.name, format="png", width=800, height=600, engine="kaleido")
+			else:
+				fig.savefig(temp_img.name, format="png", dpi=100)
+
+		pdf.image(temp_img.name, x=10, w=180)
+		pdf.ln(5)
+
+	# Generate the stock price plot for the given stock code
+	fig_stock = plot_stock_price(MERGED_DF, stock_code)
+	if fig_stock:
+		with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img_stock:
+			fig_stock.savefig(temp_img_stock.name, format="png", dpi=100)
+
+		pdf.ln(10)  # Adding some space before the image
+		pdf.image(temp_img_stock.name, x=10, w=180)  # Adding the stock price plot image
+
+	progress_bar.progress(1 / 4)  # Update progress
+	# ===============================================================================
+
+	# Industry Overview Section
+	pdf.add_page()
+	pdf.cell(200, 20, "2. Tổng quan Theo Ngành", ln=True)
+	data = dataframesTab2.copy()
+
+	# Kiểm tra nếu dữ liệu rỗng
+	if data.empty:
+		pdf.cell(200, 10, "Không có dữ liệu để hiển thị", ln=True, align='C')
+	else:
+		# Chọn khoảng thời gian
+		min_date = data["Date"].min()
+		max_date = data["Date"].max()
+		if pd.isna(min_date) or pd.isna(max_date):
+			pdf.cell(200, 10, "Dữ liệu không có ngày hợp lệ. Vui lòng kiểm tra lại", ln=True, align='C')
+			min_date, max_date = pd.to_datetime("2025-01-01"), pd.to_datetime("2025-02-28")
+
+		# Lọc dữ liệu theo mã cổ phiếu và thời gian
+		filtered_data = data[(data["Ticker"] == stock_code) & (data["Date"] >= pd.to_datetime(start_date)) & (
+				data["Date"] <= pd.to_datetime(end_date))].copy()
+
+		# Kiểm tra nếu không có dữ liệu sau khi lọc
+		if filtered_data.empty:
+			pdf.cell(200, 10, "Không có dữ liệu trong khoảng thời gian đã chọn.", ln=True, align='C')
+		else:
+			fig = createFigureTab2(filtered_data, stock_code, False)
+			# st.plotly_chart(fig)
+			
+			# pdf.add_page()
+			with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
+				temp_img.close()  # important
+				if hasattr(fig, "write_image"):
+					fig.write_image(temp_img.name, format="png", width=800, height=600, engine="kaleido")
+				else:
+					fig.savefig(temp_img.name, format="png", dpi=100)
+
+			pdf.image(temp_img.name, x=10, w=180)
+			pdf.ln(5)
+
+	progress_bar.progress(2 / 4)  # Update progress
+	# ===============================================================================
+	# Technical Analysis Section
+	pdf.add_page()
+	pdf.set_font("DejaVu", size=16)
+	pdf.cell(200, 20, "3. Phân tích Kỹ thuật", ln=True)
+
+	if df_price_tab3 is not None or df_volume_tab3 is not None:
+		# Hiển thị bảng snapshot chỉ báo
+		df_snapshot_tab3 = calculate_indicators_snapshot(df_price_tab3, df_volume_tab3, selected_date)
+		if df_snapshot_tab3 is not None:
+			# Xây dựng biểu đồ dựa trên các lựa chọn
+			fig = update_chart(df_ts, stock_code, selected_indicators, selected_ma, selected_rsi, selected_cci,
+								selected_combination)
+            
+			# pdf.add_page()
+			with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
+				temp_img.close()  # important
+				if hasattr(fig, "write_image"):
+					fig.write_image(temp_img.name, format="png", width=800, height=600, engine="kaleido")
+				else:
+					fig.savefig(temp_img.name, format="png", dpi=100)
+
+			pdf.image(temp_img.name, x=10, w=180)
+			pdf.ln(5)
+
+	progress_bar.progress(3 / 4)  # Update progress
+
+	# Financial Report Section
+	pdf.add_page()
+	pdf.cell(200, 20, "4. Báo cáo Tài chính", ln=True)
+	
+	draw_chart(stock_code)
+	progress_bar.progress(3.5 / 4)  # Update progress
+
+	generate_pdf(stock_code, pdf)
+	progress_bar.progress(4 / 4)  # Update progress
+     
+	pdf.output(file_name, "F")
+	os.startfile(file_name)
+		
+	# with open(file_name, "rb") as f:
+	# 	pdf_bytes = f.read()
+	# 	st.download_button(label="Tải PDF", data=pdf_bytes, file_name=file_name, mime="application/pdf")
+
+	print(f"PDF file created successfully: {file_name}")
+                
+
 # ============================================ MAIN ========================================================
 if selected == "1. Tổng quan thị trường":
     st.markdown("<h1>📊 Tổng quan thị trường</h1>", unsafe_allow_html=True)
@@ -2384,7 +2550,7 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
         df_ts = compute_timeseries_indicators(df_ts)
 
         # Xây dựng biểu đồ dựa trên các lựa chọn
-        fig = update_chart(df_ts, stock_code, selected_indicators, selected_ma, selected_rsi, selected_cci, selected_combination)
+        figTab3 = update_chart(df_ts, stock_code, selected_indicators, selected_ma, selected_rsi, selected_cci, selected_combination)
 
         # Market Overview Filters
         st.subheader("4. Báo cáo tài chính")
@@ -2393,66 +2559,12 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
     with col2:
         st.subheader("📄 Xuất Báo Cáo Tổng Hợp")
         if st.button("Tạo Báo Cáo Tổng hợp PDF"):
+            if not stock_code:
+                st.warning("⚠ Vui lòng chọn mã cổ phiếu!")
+                st.stop()
+
             with st.spinner("⏳ Đang tạo báo cáo tổng hợp..."):
-                # Create a comprehensive PDF report
-                def generate_comprehensive_pdf():
-                    pdf = FPDF()
-                    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
-                    pdf.set_font("DejaVu", size=12)
-                    
-                    # Title Page
-                    pdf.add_page()
-                    pdf.set_font("DejaVu", size=24)
-                    pdf.cell(200, 40, "Báo Cáo Phân Tích Tổng Hợp", ln=True, align='C')
-                    pdf.set_font("DejaVu", size=12)
-                    pdf.cell(200, 10, f"Ngày tạo: {datetime.now().strftime('%d/%m/%Y')}", ln=True, align='C')
-                    
-                    # Technical Analysis Section
-                    pdf.add_page()
-                    pdf.set_font("DejaVu", size=16)
-                    pdf.cell(200, 20, "1. Phân tích Kỹ thuật", ln=True)
-                    if selected_indicators:
-                        fig_technical = update_chart(df_ts, stock_code, selected_indicators, 
-                                                   selected_ma, selected_rsi, selected_cci, None)
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
-                            fig_technical.write_image(temp_img.name)
-                            pdf.image(temp_img.name, x=10, w=190)
-                    
-                    # Financial Report Section
-                    pdf.add_page()
-                    pdf.cell(200, 20, "2. Báo cáo Tài chính", ln=True)
-                    if stock_code:
-                        transposed_df = process_financial_data(stock_code)
-                        # Add financial data visualization
-                        
-                    # Industry Overview Section
-                    pdf.add_page()
-                    pdf.cell(200, 20, "3. Tổng quan Ngành", ln=True)
-                    if selected_date:
-                        fig_industry = plot_sector_treemap(selected_date)
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
-                            fig_industry.write_image(temp_img.name)
-                            pdf.image(temp_img.name, x=10, w=190)
-                    
-                    # Market Overview Section
-                    pdf.add_page()
-                    pdf.cell(200, 20, "4. Tổng quan Thị trường", ln=True)
-                    # Add market overview visualization
-                    
-                    return pdf
-                
                 # Generate and save the PDF
-                pdf = generate_comprehensive_pdf()
-                pdf_path = "comprehensive_report.pdf"
-                pdf.output(pdf_path)
-                
-                # Provide download button
-                with open(pdf_path, "rb") as file:
-                    st.download_button(
-                        "📥 Tải xuống Báo cáo Tổng hợp",
-                        data=file,
-                        file_name="comprehensive_report.pdf",
-                        mime="application/pdf"
-                    )
+                generate_comprehensive_pdf(stock_code, selected_date, start_date, end_date, selected_indicators, df_ts, selected_ma, selected_rsi, selected_cci, selected_combination)
                 st.success("✅ Báo cáo tổng hợp đã được tạo thành công!")
 # ============================== TỔNG HỢP - END ===============================

@@ -62,7 +62,8 @@ def draw_chart(stock_code):
     print(f"Biểu đồ đã được lưu tại {file_name}")
 
     plt.show()
-# Vẽ biểu đồ cấu trúc tài sản
+    
+    # Vẽ biểu đồ cấu trúc tài sản
     ts_ngan_han = get_values(transposed_df, "CĐKT. TÀI SẢN NGẮN HẠN")
     ts_dai_han = get_values(transposed_df, "CĐKT. TÀI SẢN DÀI HẠN")
     total_assets = ts_ngan_han + ts_dai_han
