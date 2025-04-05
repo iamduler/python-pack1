@@ -25,6 +25,9 @@ from drawchart import draw_chart
 
 st.set_page_config(layout="wide")  # Giao diện toàn màn hình
 
+import os
+print("Current working directory:", os.getcwd())
+
 # **Chèn CSS tùy chỉnh để áp dụng font "Poppins" cho toàn bộ trang**
 st.markdown(
     """
@@ -193,7 +196,7 @@ def generate_pdf_by_stock_code(stock_code):
         # Initialize PDF
         pdf = FPDF()
         pdf.add_page()
-        pdf.add_font("DejaVu", "", r"./DejaVuSans.ttf", uni=True)
+        pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)  # Regular
         pdf.set_font("DejaVu", size=12)
 
         pdf.cell(200, 10, "Báo cáo thị trường chứng khoán Việt Nam", ln=True, align='C')
@@ -217,6 +220,7 @@ def generate_pdf_by_stock_code(stock_code):
             continue
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_img:
+            temp_img.close()  # important
             if hasattr(fig, "write_image"):
                 fig.write_image(temp_img.name, format="png", width=800, height=600, engine="kaleido")
             else:
@@ -2293,11 +2297,11 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
         
         # Technical Analysis Filters
         st.subheader("1. Bộ lọc - Tổng quan thị trường")
-        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</i>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</div>", unsafe_allow_html=True)
 
         # Financial Report Filters
         st.subheader("2. Bộ lọc - Tổng quan theo ngành")
-        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + ngày bắt đầu & kết thúc.)</i>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + ngày bắt đầu & kết thúc.)</div>", unsafe_allow_html=True)
 
         dataTab2 = dataframesTab2.copy()
 
@@ -2311,20 +2315,16 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
             dataTab2["Date"] <= pd.to_datetime(end_date))].copy()
 
         figTab2 = createFigureTab2(filtered_data, stock_code)
-        
-        if st.button("Xuất Báo Cáo Tổng Hợp"):
-            pdf_output = export_pdf_combined(figTab2, datetime.now())
-            st.download_button(
-                label="Tổng quan theo ngành",
-                data=pdf_output,
-                file_name=f"Tong_quan_theo_nganh_{stock_code}.pdf",
-                mime="application/pdf"
-            )
 
         # Industry Overview Filters
         st.subheader("3. Bộ lọc - Phân tích kỹ thuật")
-        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + chỉ báo kĩ thuật + khoảng thời gian)</i>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu + chỉ báo kĩ thuật + khoảng thời gian)</div>", unsafe_allow_html=True)
         
+        # Chuyển đổi date_columns_tab3 sang datetime
+        date_columns_dt_tab3 = pd.to_datetime(date_columns_tab3, format="%Y-%m-%d", errors="coerce").dropna().sort_values()
+        # Lấy ngày kết thúc
+        selected_date = select_date(date_columns_dt_tab3)
+
         if not stock_code:
             st.warning("⚠ Vui lòng chọn mã cổ phiếu!")
             st.stop()
@@ -2358,11 +2358,6 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
         time_range_tab3 = select_time_period_tab3()
         # Xác định ngày bắt đầu dựa trên khoảng thời gian được chọn
 
-        # Chuyển đổi date_columns_tab3 sang datetime
-        date_columns_dt_tab3 = pd.to_datetime(date_columns_tab3, format="%Y-%m-%d", errors="coerce").dropna().sort_values()
-        # Lấy ngày kết thúc
-        selected_date = select_date(date_columns_dt_tab3)
-
         time_ranges_tab3 = {
             "1 tuần": selected_date - pd.DateOffset(weeks=1),
             "1 tháng": selected_date - pd.DateOffset(months=1),
@@ -2390,24 +2385,14 @@ elif selected == "0. PHÂN TÍCH TỔNG HỢP":
 
         # Xây dựng biểu đồ dựa trên các lựa chọn
         fig = update_chart(df_ts, stock_code, selected_indicators, selected_ma, selected_rsi, selected_cci, selected_combination)
-        
-        if st.button("📄 Export PDF"):
-            pdf_output = export_pdf_combined(fig, datetime.now())
-            st.download_button(
-                label="Download PDF",
-                data=pdf_output,
-                file_name=f"Phân tích kỹ thuật {stock_code}.pdf",
-                mime="application/pdf"
-            )
-
 
         # Market Overview Filters
         st.subheader("4. Báo cáo tài chính")
-        st.markdown("<i style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</i>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center'>(Đầu vào bao gồm: Mã cổ phiếu)</div>", unsafe_allow_html=True)
     
     with col2:
         st.subheader("📄 Xuất Báo Cáo Tổng Hợp")
-        if st.button("Tạo Báo Cáo PDF"):
+        if st.button("Tạo Báo Cáo Tổng hợp PDF"):
             with st.spinner("⏳ Đang tạo báo cáo tổng hợp..."):
                 # Create a comprehensive PDF report
                 def generate_comprehensive_pdf():
